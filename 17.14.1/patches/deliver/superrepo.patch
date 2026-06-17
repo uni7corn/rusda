@@ -8,13 +8,6 @@ index b956017..194cc95 100644
  /subprojects/*
 +/build-android-*/
 +/dist-android/
-diff --git a/releng b/releng
-index 60585cf..034b4c4 160000
---- a/releng
-+++ b/releng
-@@ -1 +1 @@
--Subproject commit 60585cf5cfccd0c870adffe1ff16af03f09572c1
-+Subproject commit 034b4c4550fab1a6331f49b78148b7b0f0174cb7
 diff --git a/tools/build-android-all.sh b/tools/build-android-all.sh
 new file mode 100755
 index 0000000..ac1d486

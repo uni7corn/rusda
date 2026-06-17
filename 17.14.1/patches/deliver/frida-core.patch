@@ -1,31 +1,34 @@
 diff --git a/.gitignore b/.gitignore
-index b612191c..96549b38 100644
+index b366e10..1307f24 100644
 --- a/.gitignore
 +++ b/.gitignore
-@@ -18,3 +18,5 @@
+@@ -19,3 +19,5 @@
  /src/linux/helpers/build/
  /src/linux/helpers/ext/
  /subprojects/*
 +*.deps
 +*.vapi
 diff --git a/compat/build.py b/compat/build.py
-index 789243af..47b68554 100644
+index 556f34b..d37913d 100644
 --- a/compat/build.py
 +++ b/compat/build.py
-@@ -209,25 +209,25 @@ def setup(role: Role,
-                 group = OutputGroup(other_arch)
-                 outputs[group] = [
-                     Output(identifier=f"helper_{kind}",
--                           name=f"frida-helper-{other_arch}",
-+                           name=f"rusda-helper-{other_arch}",
-                            file=HELPER_FILE_UNIX,
-                            target=HELPER_TARGET),
-                     Output(identifier=f"agent_{kind}",
--                           name=f"frida-agent-{other_arch}.dylib",
-+                           name=f"rusda-agent-{other_arch}.dylib",
-                            file=AGENT_FILE_DARWIN,
-                            target=AGENT_TARGET),
-                 ]
+@@ -238,28 +238,28 @@ def setup(role: Role,
+                 if "helper" in components:
+                     outputs[group] += [
+                         Output(identifier=f"helper_{kind}",
+-                               name=f"frida-helper-{other_arch}",
++                               name=f"rusda-helper-{other_arch}",
+                                file=HELPER_FILE_UNIX,
+                                target=HELPER_TARGET),
+                     ]
+                 if "agent" in components:
+                     outputs[group] += [
+                         Output(identifier=f"agent_{kind}",
+-                               name=f"frida-agent-{other_arch}.dylib",
++                               name=f"rusda-agent-{other_arch}.dylib",
+                                file=AGENT_FILE_DARWIN,
+                                target=AGENT_TARGET),
+                     ]
                  if "gadget" in components:
                      outputs[group] += [
                          Output(identifier=f"gadget_{kind}",
@@ -42,8 +45,8 @@ index 789243af..47b68554 100644
                                 file=SERVER_FILE_UNIX,
                                 target=SERVER_TARGET),
                      ]
-@@ -298,14 +298,14 @@ def setup(role: Role,
-             if host_os == "android" and host_arch in {"x86_64", "x86"}:
+@@ -346,14 +346,14 @@ def setup(role: Role,
+             if host_os == "android" and host_arch in {"x86_64", "x86"} and "agent" in components:
                  outputs[OutputGroup("arm")] = [
                      Output(identifier="agent_emulated_legacy",
 -                           name="frida-agent-arm.so",
@@ -59,8 +62,8 @@ index 789243af..47b68554 100644
                                 file=AGENT_FILE_ELF,
                                 target=AGENT_TARGET),
                      ]
-@@ -636,21 +636,21 @@ STATE_FILENAME = "state.dat"
- DEPFILE_FILENAME = "compat.deps"
+@@ -802,21 +802,21 @@ OVERRIDDEN_COMPAT_OPTIONS = {
+ }
  
  HELPER_TARGET = "frida-helper"
 -HELPER_FILE_WINDOWS = Path("src") / "frida-helper.exe"
@@ -91,10 +94,10 @@ index 789243af..47b68554 100644
  MSVS_ENVVARS = {
      "PLATFORM",
 diff --git a/inject/meson.build b/inject/meson.build
-index b9b67606..8eca8eff 100644
+index 713c731..240ca2d 100644
 --- a/inject/meson.build
 +++ b/inject/meson.build
-@@ -30,8 +30,8 @@ raw_inject = executable('frida-inject-raw', inject_sources,
+@@ -17,8 +17,8 @@ raw_inject = executable('frida-inject-raw', inject_sources,
  
  custom_target('frida-inject',
    input: [raw_inject, 'frida-inject.xcent'],
@@ -106,10 +109,10 @@ index b9b67606..8eca8eff 100644
    install_dir: get_option('bindir'),
  )
 diff --git a/lib/agent/agent.vala b/lib/agent/agent.vala
-index 08833696..32119f6f 100644
+index f99f31f..3449f4a 100644
 --- a/lib/agent/agent.vala
 +++ b/lib/agent/agent.vala
-@@ -343,7 +343,7 @@ namespace Frida.Agent {
+@@ -363,7 +363,7 @@ namespace Frida.Agent {
  		}
  
  		private void keep_running_eternalized () {
@@ -118,7 +121,7 @@ index 08833696..32119f6f 100644
  				var ignore_scope = new ThreadIgnoreScope (FRIDA_THREAD);
  
  				agent_tid = Gum.Process.get_current_thread_id ();
-@@ -539,7 +539,7 @@ namespace Frida.Agent {
+@@ -559,7 +559,7 @@ namespace Frida.Agent {
  					assert_not_reached ();
  				}
  			} else {
@@ -127,7 +130,7 @@ index 08833696..32119f6f 100644
  					var ignore_scope = new ThreadIgnoreScope (FRIDA_THREAD);
  					run_after_transition ();
  					ignore_scope = null;
-@@ -647,7 +647,7 @@ namespace Frida.Agent {
+@@ -667,7 +667,7 @@ namespace Frida.Agent {
  					assert_not_reached ();
  				}
  			} else {
@@ -136,7 +139,7 @@ index 08833696..32119f6f 100644
  					var ignore_scope = new ThreadIgnoreScope (FRIDA_THREAD);
  					run_after_transition ();
  					ignore_scope = null;
-@@ -1409,7 +1409,7 @@ namespace Frida.Agent {
+@@ -1429,7 +1429,7 @@ namespace Frida.Agent {
  
  				emulated_bridge_state = new BridgeState (parameters.str);
  
@@ -146,23 +149,23 @@ index 08833696..32119f6f 100644
  				var connection = yield new DBusConnection (stream, ServerGuid.HOST_SESSION_SERVICE,
  					AUTHENTICATION_SERVER | AUTHENTICATION_ALLOW_ANONYMOUS, null, cancellable);
 diff --git a/lib/base/linux.vala b/lib/base/linux.vala
-index 7e74610f..77f44504 100644
+index 6e915e5..2fcfe2f 100644
 --- a/lib/base/linux.vala
 +++ b/lib/base/linux.vala
-@@ -78,7 +78,7 @@ namespace Frida {
+@@ -124,7 +124,7 @@ namespace Frida {
  		}
  
  		private int memfd_create (string name, uint flags) {
--			return Linux.syscall (SysCall.memfd_create, name, flags);
-+			return Linux.syscall (SysCall.memfd_create, "jit-cache", flags);
+-			return Linux.syscall (LinuxSyscall.MEMFD_CREATE, name, flags);
++			return Linux.syscall (LinuxSyscall.MEMFD_CREATE, "jit-cache", flags);
  		}
  	}
- }
+ 
 diff --git a/lib/base/meson.build b/lib/base/meson.build
-index 64b7d538..e153700e 100644
+index 10eb920..ca7bb74 100644
 --- a/lib/base/meson.build
 +++ b/lib/base/meson.build
-@@ -4,6 +4,7 @@ base_sources = [
+@@ -5,6 +5,7 @@ base_sources = [
    'channel.vala',
    'service.vala',
    'stream.vala',
@@ -172,7 +175,7 @@ index 64b7d538..e153700e 100644
    'p2p-glue.c',
 diff --git a/lib/base/obfuscate.vala b/lib/base/obfuscate.vala
 new file mode 100644
-index 00000000..5665e80d
+index 0000000..5665e80
 --- /dev/null
 +++ b/lib/base/obfuscate.vala
 @@ -0,0 +1,25 @@
@@ -202,7 +205,7 @@ index 00000000..5665e80d
 +	}
 +}
 diff --git a/lib/base/p2p.vala b/lib/base/p2p.vala
-index abe5255d..c4a22480 100644
+index abe5255..c4a2248 100644
 --- a/lib/base/p2p.vala
 +++ b/lib/base/p2p.vala
 @@ -889,7 +889,7 @@ namespace Frida {
@@ -215,10 +218,10 @@ index abe5255d..c4a22480 100644
  			string local_cert_pem;
  			string local_key_pem;
 diff --git a/lib/base/rpc.vala b/lib/base/rpc.vala
-index c4654527..e9958db0 100644
+index 97edecf..edd34cc 100644
 --- a/lib/base/rpc.vala
 +++ b/lib/base/rpc.vala
-@@ -11,13 +11,18 @@ namespace Frida {
+@@ -22,6 +22,11 @@ namespace Frida {
  			Object (peer: peer);
  		}
  
@@ -227,9 +230,10 @@ index c4654527..e9958db0 100644
 +			return quoted ? "\"" + s + "\"" : s;
 +		}
 +
- 		public async Json.Node call (string method, Json.Node[] args, Bytes? data, Cancellable? cancellable) throws Error, IOError {
- 			string request_id = Uuid.string_random ();
- 
+ 		/**
+ 		 * Calls a remote method and waits for its result.
+ 		 *
+@@ -36,7 +41,7 @@ namespace Frida {
  			var request = new Json.Builder ();
  			request
  				.begin_array ()
@@ -238,16 +242,16 @@ index c4654527..e9958db0 100644
  				.add_string_value (request_id)
  				.add_string_value ("call")
  				.add_string_value (method)
-@@ -70,7 +75,7 @@ namespace Frida {
- 		}
- 
+@@ -96,7 +101,7 @@ namespace Frida {
+ 		 * @return true if the message was an RPC message and was handled
+ 		 */
  		public bool try_handle_message (string json) {
 -			if (json.index_of ("\"frida:rpc\"") == -1)
 +			if (json.index_of (get_rpc_str (true)) == -1)
  				return false;
  
  			var parser = new Json.Parser ();
-@@ -99,7 +104,7 @@ namespace Frida {
+@@ -125,7 +130,7 @@ namespace Frida {
  				return false;
  
  			string? type = rpc_message.get_element (0).get_string ();
@@ -257,7 +261,7 @@ index c4654527..e9958db0 100644
  
  			var request_id_value = rpc_message.get_element (1);
 diff --git a/lib/base/xpc.vala b/lib/base/xpc.vala
-index 8e7e4836..7a1079e3 100644
+index 8e7e483..7a1079e 100644
 --- a/lib/base/xpc.vala
 +++ b/lib/base/xpc.vala
 @@ -243,7 +243,7 @@ namespace Frida {
@@ -270,7 +274,7 @@ index 8e7e4836..7a1079e3 100644
  				description);
  		}
 diff --git a/lib/gadget/gadget.vala b/lib/gadget/gadget.vala
-index 230284c7..89894102 100644
+index 230284c..8989410 100644
 --- a/lib/gadget/gadget.vala
 +++ b/lib/gadget/gadget.vala
 @@ -580,7 +580,7 @@ namespace Frida.Gadget {
@@ -292,10 +296,10 @@ index 230284c7..89894102 100644
  						request.set_value (0);
  					} else {
 diff --git a/meson.build b/meson.build
-index 8204a024..98e1b41f 100644
+index bc5b560..6a7f707 100644
 --- a/meson.build
 +++ b/meson.build
-@@ -220,19 +220,19 @@ else
+@@ -220,11 +220,11 @@ else
    shlib_suffix = '.so'
  endif
  
@@ -306,32 +310,22 @@ index 8204a024..98e1b41f 100644
 +agent_name = 'rusda-agent' + shlib_suffix
 +gadget_name = 'rusda-gadget' + shlib_suffix
  
--root_asset_dir = get_option('libdir') / 'frida'
-+root_asset_dir = get_option('libdir') / 'rusda'
+-frida_libdir_name = f'frida-@api_version@'
++frida_libdir_name = f'rusda-@api_version@'
+ root_asset_dir = get_option('libdir') / frida_libdir_name
  if host_os_family == 'darwin'
    asset_dir = root_asset_dir
--  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'frida'
-+  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'rusda'
- else
-   asset_dir = root_asset_dir / host_cpu_mode
-   asset_dir_modern = root_asset_dir / '64'
-   asset_dir_legacy = root_asset_dir / '32'
--  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'frida' / '<arch>'
-+  default_asset_path_template = get_option('prefix') / get_option('libdir') / 'rusda' / '<arch>'
- endif
- 
- asset_path_template = get_option('asset_path_template')
 diff --git a/server/meson.build b/server/meson.build
-index bd55156d..e02e9117 100644
+index 8f24cbe..aa4bec3 100644
 --- a/server/meson.build
 +++ b/server/meson.build
-@@ -36,13 +36,13 @@ raw_server = executable('frida-server-raw', server_sources,
-   dependencies: [core_dep],
+@@ -41,13 +41,13 @@ raw_server = executable('frida-server-raw', server_sources,
+   dependencies: server_deps,
  )
  
 -server_name = 'frida-server' + exe_suffix
 +server_name = 'rusda-server' + exe_suffix
- need_universal_server = get_option('assets') == 'installed' and server_compat != ''
+ need_universal_server = assets_mode == 'installed' and server_compat != ''
  
  server = custom_target('frida-server',
    input: [raw_server, 'frida-server.xcent'],
@@ -342,7 +336,7 @@ index bd55156d..e02e9117 100644
    install_dir: get_option('bindir'),
  )
 diff --git a/server/server.vala b/server/server.vala
-index 67bf4b38..892db81b 100644
+index 0d72d59..b758bad 100644
 --- a/server/server.vala
 +++ b/server/server.vala
 @@ -1,7 +1,7 @@
@@ -355,7 +349,7 @@ index 67bf4b38..892db81b 100644
  	private static string? device_id = null;
  	private static string? listen_address = null;
 diff --git a/src/agent-container.vala b/src/agent-container.vala
-index eecfa1f6..86eb9f4a 100644
+index eecfa1f..86eb9f4 100644
 --- a/src/agent-container.vala
 +++ b/src/agent-container.vala
 @@ -28,7 +28,7 @@ namespace Frida {
@@ -368,10 +362,10 @@ index eecfa1f6..86eb9f4a 100644
  			container.main_impl = (AgentMainFunc) main_func_symbol;
  
 diff --git a/src/darwin/darwin-host-session.vala b/src/darwin/darwin-host-session.vala
-index fedd5bea..a0f5d83c 100644
+index 2033982..3d0b348 100644
 --- a/src/darwin/darwin-host-session.vala
 +++ b/src/darwin/darwin-host-session.vala
-@@ -307,7 +307,7 @@ namespace Frida {
+@@ -295,7 +295,7 @@ namespace Frida {
  		private async uint inject_agent (uint pid, string agent_parameters, Cancellable? cancellable) throws Error, IOError {
  			uint id;
  
@@ -381,7 +375,7 @@ index fedd5bea..a0f5d83c 100644
  			id = yield fruitjector.inject_library_resource (pid, agent, entrypoint, agent_parameters, cancellable);
  #else
 diff --git a/src/droidy/droidy-client.vala b/src/droidy/droidy-client.vala
-index e34ab90f..bedac271 100644
+index e34ab90..bedac27 100644
 --- a/src/droidy/droidy-client.vala
 +++ b/src/droidy/droidy-client.vala
 @@ -1015,7 +1015,7 @@ namespace Frida.Droidy {
@@ -394,10 +388,10 @@ index e34ab90f..bedac271 100644
  						default:
  							var length = parse_length (command_or_length);
 diff --git a/src/droidy/droidy-host-session.vala b/src/droidy/droidy-host-session.vala
-index a15b635b..5644f19f 100644
+index 85891fa..e9f9da1 100644
 --- a/src/droidy/droidy-host-session.vala
 +++ b/src/droidy/droidy-host-session.vala
-@@ -1007,7 +1007,7 @@ namespace Frida {
+@@ -1044,7 +1044,7 @@ namespace Frida {
  
  					shell.send_command (("CLASSPATH=%s app_process " +
  							"/data/local/tmp " +
@@ -407,7 +401,7 @@ index a15b635b..5644f19f 100644
  							"%s; " +
  							"rm -f %s; " +
 diff --git a/src/embed-agent.py b/src/embed-agent.py
-index cfb4a594..8d1db3a4 100644
+index cfb4a59..8d1db3a 100644
 --- a/src/embed-agent.py
 +++ b/src/embed-agent.py
 @@ -76,6 +76,7 @@ def main(argv):
@@ -419,7 +413,7 @@ index cfb4a594..8d1db3a4 100644
                  embedded_agent.write_bytes(b"")
              embedded_assets += [embedded_agent]
 diff --git a/src/freebsd/freebsd-host-session.vala b/src/freebsd/freebsd-host-session.vala
-index 245747ab..3cd11aff 100644
+index 245747a..3cd11af 100644
 --- a/src/freebsd/freebsd-host-session.vala
 +++ b/src/freebsd/freebsd-host-session.vala
 @@ -132,7 +132,7 @@ namespace Frida {
@@ -432,10 +426,10 @@ index 245747ab..3cd11aff 100644
  			injectee_by_pid[pid] = id;
  
 diff --git a/src/frida-glue.c b/src/frida-glue.c
-index ee8f0737..d4e43a60 100644
+index 6154034..eed80a5 100644
 --- a/src/frida-glue.c
 +++ b/src/frida-glue.c
-@@ -40,11 +40,13 @@ frida_init_with_runtime (FridaRuntime rt)
+@@ -56,11 +56,13 @@ frida_init_with_runtime (FridaRuntime rt)
      g_io_module_openssl_register ();
  #endif
  
@@ -451,10 +445,10 @@ index ee8f0737..d4e43a60 100644
  
      g_once_init_leave (&frida_initialized, TRUE);
 diff --git a/src/linux/linux-host-session.vala b/src/linux/linux-host-session.vala
-index db4c078c..732d4daa 100644
+index 3f5cba7..9a1c442 100644
 --- a/src/linux/linux-host-session.vala
 +++ b/src/linux/linux-host-session.vala
-@@ -63,12 +63,12 @@ namespace Frida {
+@@ -64,12 +64,12 @@ namespace Frida {
  			var blob64 = Frida.Data.Agent.get_frida_agent_64_so_blob ();
  			var emulated_arm = Frida.Data.Agent.get_frida_agent_arm_so_blob ();
  			var emulated_arm64 = Frida.Data.Agent.get_frida_agent_arm64_so_blob ();
@@ -470,7 +464,7 @@ index db4c078c..732d4daa 100644
  				},
  				AgentMode.INSTANCED,
  				tempdir);
-@@ -348,7 +348,7 @@ namespace Frida {
+@@ -387,7 +387,7 @@ namespace Frida {
  		protected override async Future<IOStream> perform_attach_to (uint pid, HashTable<string, Variant> options,
  				Cancellable? cancellable, out Object? transport) throws Error, IOError {
  			uint id;
@@ -479,7 +473,7 @@ index db4c078c..732d4daa 100644
  			string parameters = make_agent_parameters (pid, "", options);
  			AgentFeatures features = CONTROL_CHANNEL;
  			var linjector = (Linjector) injector;
-@@ -373,10 +373,10 @@ namespace Frida {
+@@ -412,10 +412,10 @@ namespace Frida {
  			unowned string name;
  			switch (cpu_type_from_pid (pid)) {
  				case Gum.CpuType.IA32:
@@ -492,17 +486,8 @@ index db4c078c..732d4daa 100644
  					break;
  				default:
  					throw new Error.NOT_SUPPORTED ("Emulated realm is not supported on this architecture");
-@@ -417,7 +417,7 @@ namespace Frida {
- 				process = launcher.spawn (
- 					"app_process",
- 					"/data/local/tmp",
--					"--nice-name=re.frida.helper",
-+					"--nice-name=re.rusda.helper",
- 					"re.frida.Helper",
- 					instance_id
- 				);
 diff --git a/src/qnx/qnx-host-session.vala b/src/qnx/qnx-host-session.vala
-index 7d5b3e51..3d7fb982 100644
+index 7d5b3e5..3d7fb98 100644
 --- a/src/qnx/qnx-host-session.vala
 +++ b/src/qnx/qnx-host-session.vala
 @@ -117,7 +117,7 @@ namespace Frida {
@@ -516,7 +501,7 @@ index 7d5b3e51..3d7fb982 100644
  
 diff --git a/src/topatch.py b/src/topatch.py
 new file mode 100644
-index 00000000..0f499d5
+index 0000000..0f499d5
 --- /dev/null
 +++ b/src/topatch.py
 @@ -0,0 +1,71 @@
@@ -592,20 +577,20 @@ index 00000000..0f499d5
 +            os.system(f"sed -b -i s/{raw_name}/{new_raw}/g {input_file}")
 +        log_color(f"[*] Patch Finish")
 diff --git a/src/windows/windows-host-session.vala b/src/windows/windows-host-session.vala
-index b77a59aa..f902b77f 100644
+index 167ea74..f3170c1 100644
 --- a/src/windows/windows-host-session.vala
 +++ b/src/windows/windows-host-session.vala
-@@ -225,7 +225,7 @@ namespace Frida {
- 			var stream_request = Pipe.open (t.local_address, cancellable);
+@@ -251,7 +251,7 @@ namespace Frida {
  
  			var winjector = injector as Winjector;
+ #if HAVE_EMBEDDED_ASSETS
 -			var id = yield winjector.inject_library_resource (pid, agent, "frida_agent_main",
 +			var id = yield winjector.inject_library_resource (pid, agent, "main",
  				make_agent_parameters (pid, t.remote_address, options), cancellable);
- 			injectee_by_pid[pid] = id;
- 
+ #else
+ 			var id = yield winjector.inject_library_file_with_template (pid,
 diff --git a/tools/post-process.py b/tools/post-process.py
-index 4d0cd49f..c057da29 100644
+index 4d0cd49..c057da2 100644
 --- a/tools/post-process.py
 +++ b/tools/post-process.py
 @@ -67,6 +67,13 @@ def main(argv):
