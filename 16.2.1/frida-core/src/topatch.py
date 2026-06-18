@@ -58,4 +58,12 @@ if __name__ == "__main__":
         log_color(f"[*] Patch `gdbus` to `{random_name}`")
         os.system(f"sed -b -i s/gdbus/{random_name}/g {input_file}")
 
+        # 上面 lief 只反转了 .rodata 里的 GObject 串；在 64 位(arm64/x86_64)上这些串
+        # 常落在 .data.rel.ro，lief 不会命中。这里再做一次等长 byte-sed 兜底，覆盖所有节，
+        # 保证 server/inject/gadget 都不残留这些特征（与 verify-patch.py 的硬性检查一致）。
+        for orig in all_patch_string:
+            rev = orig[::-1]
+            log_color(f"[*] byte-sed (all sections) `{orig}` -> `{rev}`")
+            os.system(f"sed -b -i s/{orig}/{rev}/g {input_file}")
+
         log_color(f"[*] Patch Finish")
