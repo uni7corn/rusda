@@ -18,7 +18,8 @@
 
 | 版本 | 适用 | 编译所需 NDK |
 | --- | --- | --- |
-| [17.14.1](https://github.com/taisuii/rusda/releases/tag/17.14.1) | 最新版，特性最全 | r29 |
+| [17.15.0](https://github.com/taisuii/rusda/releases/tag/17.15.0) | 最新版，特性最全 | r29 |
+| [17.14.1](https://github.com/taisuii/rusda/releases/tag/17.14.1) | 17.14 线 | r29 |
 | [17.6.2](https://github.com/taisuii/rusda/releases/tag/17.6.2) | 稳定版 | r25 |
 | [16.7.19](https://github.com/taisuii/rusda/releases/tag/16.7.19) | 16.7 线 | r25 |
 | [16.2.1](https://github.com/taisuii/rusda/releases/tag/16.2.1) | 老机型 / 低版本 Android | r25 |
